@@ -2,6 +2,7 @@
 #define HASH_TBL_H
 
 #include <exception>
+#include <forward_list>
 #include <list>
 
 namespace MyHashTable {
@@ -48,18 +49,21 @@ namespace MyHashTable {
 
             bool insert ( const KeyType &, const DataType & ) throw ( std::bad_alloc );
             bool remove ( const KeyType & );
-            // bool retrieve ( const KeyType &, DataType & ) const;
-            // void clear ( void );
-            // bool isEmpty ( void ) const;
-            // unsigned long int count ( void ) const;
+            bool retrieve ( const KeyType &, DataType & ) const;
+            void clear ( void );
+            bool isEmpty ( void ) const;
+            unsigned long int count ( void ) const;
 
-            // void showStructure () const;
+            void showStructure () const;
 
        private:
-           //! Disable copy constructor (we don't need it in this implementation).
-           // HashTbl( const HashTbl& );
+           // ! Disable copy constructor (we don't need it in this implementation).
+           HashTbl( const HashTbl& );
            // //! Assignment method is also disabled.
-           // const HashTbl & operator= ( const HashTbl & );
+           const HashTbl & operator= ( const HashTbl & );
+
+           //return the next prime number
+          unsigned long int thePrime(int theCapacity);
 
        private:
            //! Rehash

@@ -2,6 +2,7 @@
 #define _HASHTBL_HPP_
 
 #include <iostream>
+#include <memory>
 
 #include "hashtbl.hpp"
 
@@ -10,38 +11,41 @@ namespace MyHashTable {
 	template <class KeyType, class DataType, class KeyHash, class KeyEqual>
 	HashTbl<KeyType, DataType, KeyHash, KeyEqual>::HashTbl ( int _initTableSize = DEFAULT_SIZE )
 	{
-		mSize = _initTableSize;
-		mCount = 0;
+		this->mSize = this->thePrime(_initTableSize);
+		this->mpDataTable = new std::list< Entry >[this->mSize];
+		this->mCount = 0;
 	}
 
 	template <class KeyType, class DataType, class KeyHash, class KeyEqual>
 	HashTbl<KeyType, DataType, KeyHash, KeyEqual>::~HashTbl () 
 	{
-		for(unsigned long int i = 0; i < mSize; i++) {
-			delete[] mpDataTable[i];
-		}
+		this->clear();
 	}
 
 	template <class KeyType, class DataType, class KeyHash, class KeyEqual>
 	bool HashTbl<KeyType, DataType, KeyHash, KeyEqual>::insert ( const KeyType & Thekey, const DataType & TheData) throw ( std::bad_alloc ) {
 		KeyHash TheClientHashFunction;
 
+		if(mSize <= mCount) {
+			this->rehash();
+		}
+
 		unsigned long int ClientHashReturn = TheClientHashFunction(Thekey);
 		unsigned long int ThePosition = ClientHashReturn % mSize;
 
-		Entry NewTablePosition = mpDataTable[ThePosition];
+		Entry NewTablePosition = mpDataTable[ThePosition].begin();
 		Entry LastTablePosition = mpDataTable[ThePosition].end();
 
 		KeyEqual TheClientEqualFunction;
 
-		for( /* Empty */ ;NewTablePosition != LastTablePosition; NewTablePosition++) {
-			if(TheClientEqualFunction(/* COMO CHAMAR O DADO DE NewTablePosition */, Thekey)) {
-				NewTablePosition = TheData;
+		for( /* Empty */ ; NewTablePosition != LastTablePosition; NewTablePosition++) {
+			if(TheClientEqualFunction(NewTablePosition->mKey, Thekey)) {
+				NewTablePosition->mData = TheData;
 				return false;
 			}
 		}
 
-		Entry TheEntry<Thekey, TheData>;
+		Entry TheEntry(Thekey, TheData);
 		mpDataTable[ThePosition].push_back(Thekey);
         mCount++;
         
@@ -49,20 +53,21 @@ namespace MyHashTable {
 	}
 
 	template <class KeyType, class DataType, class KeyHash, class KeyEqual>
-    bool HashTbl<KeyType, DataType, KeyHash, KeyEqual>::remove ( const KeyType & Thekey) {
+    bool HashTbl<KeyType, DataType, KeyHash, KeyEqual>::remove ( const KeyType & TheSearchKey) {
 		KeyHash TheClientHashFunction;
 
-		unsigned long int ClientHashReturn = TheClientHashFunction(Thekey);
+		unsigned long int ClientHashReturn = TheClientHashFunction(TheSearchKey);
 		unsigned long int ThePosition = ClientHashReturn % mSize;
 
-		Entry positionToErase = mpDataTable[ThePosition];
+		Entry positionToErase = mpDataTable[ThePosition].begin();
 		Entry LastTablePosition = mpDataTable[ThePosition].end();
 
 		KeyEqual TheClientEqualFunction;
 
 		for( /* Empty */ ;positionToErase != LastTablePosition; positionToErase++) {
-			if(TheClientEqualFunction(/* COMO CHAMAR O DADO DE positionToErase */, Thekey)) {
-				positionToErase.erase(positionToErase);
+			if(TheClientEqualFunction(positionToErase->mKey, TheSearchKey) ) {
+				mpDataTable[ThePosition].erase(positionToErase);
+				this->mCount--;
 				return true;
 			}
 		}
@@ -70,34 +75,84 @@ namespace MyHashTable {
         return false;
     }
 
- //    template <typename KeyType, typename DataType, typename KeyHash  = std::hash<KeyType>, typename KeyEqual = std::equal_to<KeyType> >
- //    bool HashTbl < KeyType, DataType, KeyHash, KeyEqual>::retrieve ( const KeyType &, DataType & ) const;
+    template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+    bool HashTbl < KeyType, DataType, KeyHash, KeyEqual>::retrieve ( const KeyType & TheSearchKey, DataType & TheData) const {
+    	KeyHash TheClientHashFunction;
 
- //    template <typename KeyType, typename DataType, typename KeyHash  = std::hash<KeyType>, typename KeyEqual = std::equal_to<KeyType> >
- //    void HashTbl < KeyType, DataType, KeyHash, KeyEqual>::clear ( void );
+    	unsigned long int ClientHashReturn = TheClientHashFunction(TheSearchKey);
+		unsigned long int ThePosition = ClientHashReturn % mSize;
 
- //    template <typename KeyType, typename DataType, typename KeyHash  = std::hash<KeyType>, typename KeyEqual = std::equal_to<KeyType> >
- //    bool HashTbl < KeyType, DataType, KeyHash, KeyEqual>::isEmpty ( void ) const;
+		Entry positionOnBegin = mpDataTable[ThePosition].begin();
+		Entry LastTablePosition = mpDataTable[ThePosition].end();
 
- //    template <typename KeyType, typename DataType, typename KeyHash  = std::hash<KeyType>, typename KeyEqual = std::equal_to<KeyType> >
- //    unsigned long int HashTbl < KeyType, DataType, KeyHash, KeyEqual>::count ( void ) const;
+		for( /* Empty */ ;positionOnBegin != LastTablePosition; positionOnBegin++) {
+			if(TheClientEqualFunction(positionOnBegin->mKey, TheSearchKey) ) {
+				TheData = positionOnBegin->mData;
+				this->mCount--;
+				return true;
+			}
+		}
 
- //    template <typename KeyType, typename DataType, typename KeyHash  = std::hash<KeyType>, typename KeyEqual = std::equal_to<KeyType> >
- //    void showStructure () const;
+    	return false;
+    }
 
-	// template <typename KeyType, typename DataType, typename KeyHash  = std::hash<KeyType>, typename KeyEqual = std::equal_to<KeyType> >
- //    void  < KeyType, DataType, KeyHash, KeyEqual>rehash( void ) 
- //    {
- //    	unsigned long int newCapacity = mSize * 2;
- //    	std::list< Entry > * auxMpDataTable = new std::list< Entry >[newCapacity];
- //    	for(unsigned long int i = 0; i < mSize; i++) {
- //    		if(mpDataTable[i]->empty()) {
- //    			continue;
- //    		}
- //    		auto elem = mpDataTable[i].begin();
+    template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+    void HashTbl < KeyType, DataType, KeyHash, KeyEqual>::clear ( void ) {
+    	for(unsigned long int i = 0; i < this->mCount; i++) {
+    		this->mpDataTable[i].~list();
+    	}
+    	this->mCount = 0;
+    }
 
- //    	}
- //    }
+    template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+    bool HashTbl < KeyType, DataType, KeyHash, KeyEqual>::isEmpty ( void ) const {
+    	return 0 == this->mCount;
+    }
+
+    template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+    unsigned long int HashTbl < KeyType, DataType, KeyHash, KeyEqual>::count ( void ) const {
+    	return this->mCount;
+    }
+
+    template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+    void HashTbl < KeyType, DataType, KeyHash, KeyEqual>::showStructure () const {
+    	KeyHash TheClientHashFunction;
+
+    	for( auto i = 0; i < this->mSize; ++i) {
+			std::cout << i << " :{ key = ";
+			for(auto &k : this->mSizempDataTable[i]) {
+				std::cout << TheClientHashFunction(k.mKey) << " ; " << k.mData << " ";
+			}
+			std::cout << "}\n";
+		}
+    }
+
+	template <typename KeyType, typename DataType, typename KeyHash  = std::hash<KeyType>, typename KeyEqual = std::equal_to<KeyType> >
+    void  HashTbl < KeyType, DataType, KeyHash, KeyEqual>::rehash( void ) 
+    {
+    	unsigned long int newCapacity = mSize * 2;
+    	std::list< Entry > * auxMpDataTable = new std::list< Entry >[newCapacity];
+    	for(unsigned long int i = 0; i < mSize; i++) {
+    		if(mpDataTable[i]->empty()) {
+    			continue;
+    		}
+    		auto elem = mpDataTable[i].begin();
+
+    	}
+    }
+
+    template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+	unsigned long int HashTbl<KeyType, DataType, KeyHash, KeyEqual>::thePrime(int theCapacity) {
+		int count = 0, i, e;
+		for(i = theCapacity; 1 < i; i--) {
+			for(e = i - 1; 1 < e; e--) {
+				if(count == (theCapacity - 3) ) {
+					return i;
+				}
+				count++;
+			}			
+		}
+	}
 
 }
 
