@@ -5,30 +5,32 @@
 
 #include "hashtbl.hpp"
 
-	template <class KeyType, class DataType, class KeyHash  = std::hash<KeyType>, class KeyEqual = std::equal_to<KeyType> >
-	bool HashTbl < KeyType, DataType, KeyHash, KeyEqual>::HashTbl ( int _initTableSize = DEFAULT_SIZE ) 
+namespace MyHashTable {
+
+	template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+	HashTbl<KeyType, DataType, KeyHash, KeyEqual>::HashTbl ( int _initTableSize = DEFAULT_SIZE )
 	{
 		mSize = _initTableSize;
 		mCount = 0;
 	}
 
-	template <class KeyType, class DataType, class KeyHash  = std::hash<KeyType>, class KeyEqual = std::equal_to<KeyType> >
-	bool HashTbl < KeyType, DataType, KeyHash, KeyEqual>::~HashTbl () 
+	template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+	HashTbl<KeyType, DataType, KeyHash, KeyEqual>::~HashTbl () 
 	{
 		for(unsigned long int i = 0; i < mSize; i++) {
 			delete[] mpDataTable[i];
 		}
 	}
 
-	template <class KeyType, class DataType, class KeyHash  = std::hash<KeyType>, class KeyEqual = std::equal_to<KeyType> >
-	bool HashTbl < KeyType, DataType, KeyHash, KeyEqual>::insert ( const KeyType & Thekey, const DataType & TheData) throw ( std::bad_alloc ) {
+	template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+	bool HashTbl<KeyType, DataType, KeyHash, KeyEqual>::insert ( const KeyType & Thekey, const DataType & TheData) throw ( std::bad_alloc ) {
 		KeyHash TheClientHashFunction;
 
 		unsigned long int ClientHashReturn = TheClientHashFunction(Thekey);
 		unsigned long int ThePosition = ClientHashReturn % mSize;
 
-		Entry NewTablePosition = mpDataTable[position];
-		Entry LastTablePosition = mpDataTable[position].end();
+		Entry NewTablePosition = mpDataTable[ThePosition];
+		Entry LastTablePosition = mpDataTable[ThePosition].end();
 
 		KeyEqual TheClientEqualFunction;
 
@@ -40,27 +42,27 @@
 		}
 
 		Entry TheEntry<Thekey, TheData>;
-		mpDataTable[position].push_back(TheEntry);
+		mpDataTable[ThePosition].push_back(Thekey);
         mCount++;
         
         return true;
 	}
 
-	template <class KeyType, class DataType, class KeyHash  = std::hash<KeyType>, class KeyEqual = std::equal_to<KeyType> >
-    bool HashTbl < KeyType, DataType, KeyHash, KeyEqual>::remove ( const KeyType & Thekey) {
+	template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+    bool HashTbl<KeyType, DataType, KeyHash, KeyEqual>::remove ( const KeyType & Thekey) {
 		KeyHash TheClientHashFunction;
 
 		unsigned long int ClientHashReturn = TheClientHashFunction(Thekey);
 		unsigned long int ThePosition = ClientHashReturn % mSize;
 
-		Entry positionToErase = mpDataTable[position];
-		Entry LastTablePosition = mpDataTable[position].end();
+		Entry positionToErase = mpDataTable[ThePosition];
+		Entry LastTablePosition = mpDataTable[ThePosition].end();
 
 		KeyEqual TheClientEqualFunction;
 
 		for( /* Empty */ ;positionToErase != LastTablePosition; positionToErase++) {
 			if(TheClientEqualFunction(/* COMO CHAMAR O DADO DE positionToErase */, Thekey)) {
-				positionToErase.erase(it);
+				positionToErase.erase(positionToErase);
 				return true;
 			}
 		}
@@ -96,5 +98,7 @@
 
  //    	}
  //    }
+
+}
 
 #endif

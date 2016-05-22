@@ -33,17 +33,17 @@ namespace MyHashTable {
      *  \tparam KeyHash   Function object to provide a hash value given a key.
      *  \tparam KeyEqual  Function object to compara keys types.
      */
-    template < typename KeyType,
-               typename DataType,
-               typename KeyHash  = std::hash<KeyType>,
-               typename KeyEqual = std::equal_to<KeyType> >
+    template < class KeyType,
+               class DataType,
+               class KeyHash  = std::hash<KeyType>,
+               class KeyEqual = std::equal_to<KeyType> >
     class HashTbl
     {
         public:
             //! It is used to make code more concise.
             using Entry = HashEntry< KeyType, DataType >;
 
-            HashTbl ( int _initTableSize = DEFAULT_SIZE );
+            HashTbl ( int );
             virtual ~HashTbl ();
 
             bool insert ( const KeyType &, const DataType & ) throw ( std::bad_alloc );
