@@ -127,24 +127,36 @@ namespace MyHashTable {
 		}
     }
 
-	template <typename KeyType, typename DataType, typename KeyHash  = std::hash<KeyType>, typename KeyEqual = std::equal_to<KeyType> >
-    void  HashTbl < KeyType, DataType, KeyHash, KeyEqual>::rehash( void ) 
+	template <class KeyType, class DataType, class KeyHash, class KeyEqual>
+	void  HashTbl < KeyType, DataType, KeyHash, KeyEqual>::rehash( void ) 
     {
-    	unsigned long int newCapacity = mSize * 2;
+    	unsigned long int newCapacity = this->thePrime(2 * mSize);
     	std::list< Entry > * auxMpDataTable = new std::list< Entry >[newCapacity];
+    	KeyHash TheClientHashFunction; 
     	for(unsigned long int i = 0; i < mSize; i++) {
     		if(mpDataTable[i]->empty()) {
     			continue;
     		}
-    		auto elem = mpDataTable[i].begin();
+    		Entry elem = mpDataTable[i].begin();
 
+    		for( /* Empty */; elem != mpDataTable[i].end(); elem++) {
+    			Entry aux(elem->mKey, elem->mData);
+
+				unsigned long int ThePosition = TheClientHashFunction % mSize;
+    			unsigned long int end(ThePosition % newCapacity);
+
+    			auxMpDataTable[end].push_back(aux);
+    		}
     	}
+    	this->~HashTbl();
+    	mpDataTable = auxMpDataTable;
+    	mSize = newCapacity;
     }
 
     template <class KeyType, class DataType, class KeyHash, class KeyEqual>
 	unsigned long int HashTbl<KeyType, DataType, KeyHash, KeyEqual>::thePrime(int theCapacity) {
 		int count = 0, i, e;
-		for(i = theCapacity; 1 < i; i--) {
+		for(i = theCapacity; 1 < i && theCapacity <= i; i++) {
 			for(e = i - 1; 1 < e; e--) {
 				if(count == (theCapacity - 3) ) {
 					return i;
@@ -153,6 +165,7 @@ namespace MyHashTable {
 			}			
 		}
 	}
+
 
 }
 
