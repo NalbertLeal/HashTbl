@@ -1,3 +1,8 @@
+/*
+* @file
+* @brief This file have the class HashTbl declaration.
+*/
+
 #ifndef HASH_TBL_H
 #define HASH_TBL_H
 

@@ -1,6 +1,12 @@
+/*
+*   @file
+*   @brief This file have the main.
+*/
+
 #include <iostream>
 #include <functional>
 #include <tuple>
+#include <math.h>
 
 #include "hashtbl.hpp"
 
@@ -28,11 +34,7 @@ struct Account
            mBalance( _Balance )
         { /* Empty */ }
 
-    /*!
-     * \brief Gera a chave (versão 1) que eh igual a conta corrente.
-     */
-    AcctKey getKey () const
-    {
+    AcctKey getKey() const {
         return std::make_tuple( mClientName, mBankCode, mBranchCode, mNumber );
     }
 
@@ -63,25 +65,30 @@ struct Account
     }
 };
 
-
 struct KeyHash {
     std::size_t operator()(const Account::AcctKey& k) const
     {
-        return  std::hash<int>()( k );
+        return std::hash<std::string>()(std::get<0>(k)) xor
+               std::hash<int>()(std::get<1>(k) * pow(23, 1) ) xor
+               std::hash<int>()(std::get<2>(k) * pow(23, 1) ) xor
+               std::hash<int>()(std::get<3>(k) * pow(23, 1) );
     }
 };
  
 struct KeyEqual {
     bool operator()(const Account::AcctKey& lhs, const Account::AcctKey& rhs) const
     {
-        return lhs == rhs;
+        return std::get<0>(lhs) == std::get<0>(rhs) and
+               std::get<1>(lhs) == std::get<1>(rhs) and
+               std::get<2>(lhs) == std::get<2>(rhs) and
+               std::get<3>(lhs) == std::get<3>(rhs);
     }
 };
 
 
 int main( void )
 {
-    MyHashTable::HashTbl< Account::AcctKey, Account > accounts(20); // Hash table shall heve size 23.
+    MyHashTable::HashTbl< Account::AcctKey, Account, KeyHash, KeyEqual > accounts(20); // Hash table shall heve size 23.
     Account MyAccts[] =
     {
         { "Jose Silva",    1, 1668, 20123, 1500.f },
@@ -126,3 +133,4 @@ int main( void )
 
     return EXIT_SUCCESS;
 }
+
